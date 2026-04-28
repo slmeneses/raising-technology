@@ -1,0 +1,106 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #000; overflow: hidden; }
+canvas { display: block; }
+#video { position: absolute; opacity: 0; pointer-events: none; width: 1px; height: 1px; }
+#status { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); color: #333; font-family: monospace; font-size: 11px; letter-spacing: 2px; }
+
+#milestone {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-120px);
+  border: 2px solid #fff;
+  padding: 16px 28px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 13px;
+  color: #fff;
+  background: #000;
+  white-space: nowrap;
+  transition: transform 1.5s cubic-bezier(0.22, 1, 0.36, 1), opacity 1.5s ease;
+  opacity: 0;
+  z-index: 100;
+}
+#milestone.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+#attention {
+  position: fixed;
+  bottom: 88px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Press Start 2P', monospace;
+  font-size: 11px;
+  color: #fff;
+  white-space: nowrap;
+  letter-spacing: 1px;
+  opacity: 0;
+  transition: opacity 1s ease;
+  z-index: 100;
+}
+#attention.show { opacity: 1; }
+
+.hud-bar {
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  opacity: 0;
+  transition: opacity 1.5s ease;
+  z-index: 100;
+}
+.hud-bar.show { opacity: 1; }
+.hud-bar .bar-label {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 12px;
+  color: #555;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.hud-bar .bar-track {
+  width: 200px;
+  height: 9px;
+  background: #1a1a1a;
+}
+.hud-bar .bar-fill {
+  height: 100%;
+  background: #fff;
+  width: 0%;
+  transition: width 1.2s ease;
+}
+
+#hud-tl { top: 24px; left: 24px; align-items: flex-start; }
+#hud-tr { top: 24px; right: 24px; align-items: flex-end; }
+#hud-bl { bottom: 24px; left: 24px; align-items: flex-start; }
+#hud-br { bottom: 24px; right: 24px; align-items: flex-end; }
+
+#rating {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 56px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.8s ease;
+}
+#rating.show { opacity: 1; pointer-events: all; }
+#rating .prompt {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 13px;
+  color: #fff;
+  text-align: center;
+  line-height: 2.2;
+  letter-spacing: 1px;
+}
+#rating .faces { display: flex; gap: 40px; align-items: center; }
+#rating svg.face { cursor: pointer; transition: transform 0.15s ease; }
+#rating svg.face:hover { transform: scale(1.1); }
+#rating svg.face.selected .outline { fill: #fff; }
+#rating svg.face.selected .dot { fill: #000; }
+#rating svg.face.selected .mouth { stroke: #000; }
