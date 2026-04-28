@@ -20,6 +20,24 @@ const SOOTHE_IDLE_TIMEOUT = 600;
 const SLEEP_RELOAD_DELAY = 5000;
 const GLOBAL_NO_FACE_TIMEOUT = 5000;
 
+// ── iOS audio unlock ──
+let audioUnlocked = false;
+
+function unlockAudio() {
+  if (audioUnlocked) return;
+  audioUnlocked = true;
+  const tempCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const buf = tempCtx.createBuffer(1, 1, 22050);
+  const src = tempCtx.createBufferSource();
+  src.buffer = buf;
+  src.connect(tempCtx.destination);
+  src.start(0);
+  tempCtx.close();
+}
+
+document.addEventListener('touchstart', unlockAudio, { once: true });
+document.addEventListener('mousedown', unlockAudio, { once: true });
+
 let phase = 'sleeping';
 let eyeOpenAmount = 0;
 let wakeBlinkCount = 0;
