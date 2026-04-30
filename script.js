@@ -33,9 +33,6 @@ function unlockAudio() {
   src.connect(tempCtx.destination);
   src.start(0);
   tempCtx.close();
-  // also warm up speechSynthesis on first touch
-  const u = new SpeechSynthesisUtterance('');
-  window.speechSynthesis.speak(u);
 }
 
 document.addEventListener('touchstart', unlockAudio, { once: true });
@@ -76,7 +73,6 @@ function forceReset() {
   if (recognitionTick) { clearInterval(recognitionTick); recognitionTick = null; }
   if (attachmentTick) { clearInterval(attachmentTick); attachmentTick = null; }
   if (attentionInterval) { clearInterval(attentionInterval); attentionInterval = null; }
-  try { window.speechSynthesis.cancel(); } catch(e) {}
   hideHUD();
   milestoneEl.classList.remove('show');
   attentionEl.classList.remove('show');
@@ -252,6 +248,7 @@ function stopTears() {
 }
 function resumeTears() { tearsPaused = false; startTears(); }
 
+// ── cry sound ──
 let audioCtx = null, cryOsc = null, cryGain = null, cryLfo = null;
 
 function startCrySound() {
@@ -298,6 +295,7 @@ function stopCrySound() {
   } catch(e) {}
 }
 
+// ── mama (speechSynthesis) ──
 let mamaTalking = false;
 let mamaFired = false;
 let moodFlipScheduled = false;
@@ -313,28 +311,17 @@ function sayMama() {
   if (mamaTalking || mamaFired) return;
   mamaTalking = true;
   mamaFired = true;
-
-  const speak = () => {
-    const beats = ['neutral', 'ohh', 'neutral', 'ohh'];
-    beats.forEach((state, i) => {
-      setTimeout(() => {
-        mouthState = state;
-        if (i === beats.length - 1) {
-          setTimeout(() => { mouthState = 'happy'; mamaTalking = false; }, 400);
-        }
-      }, i * 400);
-    });
-    speakSyllable('mah', () => speakSyllable('muh', () => {}));
-    bumpBar('communication', 30);
-  };
-
-  // ── iOS speech fix: wait for voices to load ──
-  const voices = window.speechSynthesis.getVoices();
-  if (voices.length > 0) {
-    speak();
-  } else {
-    window.speechSynthesis.onvoiceschanged = () => { speak(); };
-  }
+  const beats = ['neutral', 'ohh', 'neutral', 'ohh'];
+  beats.forEach((state, i) => {
+    setTimeout(() => {
+      mouthState = state;
+      if (i === beats.length - 1) {
+        setTimeout(() => { mouthState = 'happy'; mamaTalking = false; }, 400);
+      }
+    }, i * 400);
+  });
+  speakSyllable('mah', () => speakSyllable('muh', () => {}));
+  bumpBar('communication', 30);
 }
 
 function triggerMoodFlip() {
@@ -546,6 +533,50 @@ function drawMouth(x, y, state) {
   }
 }
 
+// ── universal no-face counter — checked every frame, every phase ──
+let noFaceFrames = 0;
+let goingSad = false;
+
+function checkFaceLoss() {
+  if (resetting || phase === 'sleeping') return;
+
+  if (!faceDetected) {
+    noFaceFrames++;
+
+    if (noFaceFrames === NO_FACE_SAD_FRAMES && !goingSad) {
+      goingSad = true;
+      stopCrySound();
+      stopTears();
+      soothingStartTime = null;
+      soothingResolved = false;
+      isHolding = false;
+      eyeOpenAmount = 1;
+      mouthState = 'sad';
+      phase = 'sad';
+    }
+
+    if (noFaceFrames >= NO_FACE_SLEEP_FRAMES && phase === 'sad') {
+      phase = 'sleeping';
+      eyeOpenAmount = 0;
+      mouthState = 'neutral';
+      hideHUD();
+      if (!sleepReloadTimer) {
+        sleepReloadTimer = setTimeout(() => location.reload(), SLEEP_RELOAD_DELAY);
+      }
+    }
+
+  } else {
+    if (goingSad) {
+      goingSad = false;
+      noFaceFrames = 0;
+      if (sleepReloadTimer) { clearTimeout(sleepReloadTimer); sleepReloadTimer = null; }
+      startWaking();
+    } else {
+      noFaceFrames = 0;
+    }
+  }
+}
+
 function updatePhase() {
   if (resetting) return;
   if (phase === 'distress' || phase === 'soothing') return;
@@ -598,10 +629,6 @@ function updatePhase() {
     } else {
       noFaceTimer++;
       eyeContactFrames = 0;
-      if (noFaceTimer > NO_FACE_SAD_FRAMES) {
-        phase = 'sad';
-        mouthState = 'sad';
-      }
     }
     if (isBlinking) {
       blinkProgress += 0.15;
@@ -613,23 +640,7 @@ function updatePhase() {
     return;
   }
 
-  if (phase === 'sad') {
-    if (faceDetected) {
-      noFaceTimer = 0;
-      status.textContent = '';
-      startWaking();
-      return;
-    }
-    noFaceTimer++;
-    if (noFaceTimer > NO_FACE_SLEEP_FRAMES) {
-      phase = 'sleeping';
-      eyeOpenAmount = 0;
-      status.textContent = '';
-      hideHUD();
-      sleepReloadTimer = setTimeout(() => location.reload(), SLEEP_RELOAD_DELAY);
-    }
-    return;
-  }
+  // phase === 'sad': handled entirely by checkFaceLoss
 }
 
 function updateRecognition() {
@@ -676,6 +687,7 @@ function draw() {
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   t += 0.02;
 
+  checkFaceLoss();
   updatePhase();
   updateRecognition();
   updateTears();
