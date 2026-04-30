@@ -33,6 +33,9 @@ function unlockAudio() {
   src.connect(tempCtx.destination);
   src.start(0);
   tempCtx.close();
+  // also warm up speechSynthesis on first touch
+  const u = new SpeechSynthesisUtterance('');
+  window.speechSynthesis.speak(u);
 }
 
 document.addEventListener('touchstart', unlockAudio, { once: true });
@@ -310,17 +313,28 @@ function sayMama() {
   if (mamaTalking || mamaFired) return;
   mamaTalking = true;
   mamaFired = true;
-  const beats = ['neutral', 'ohh', 'neutral', 'ohh'];
-  beats.forEach((state, i) => {
-    setTimeout(() => {
-      mouthState = state;
-      if (i === beats.length - 1) {
-        setTimeout(() => { mouthState = 'happy'; mamaTalking = false; }, 400);
-      }
-    }, i * 400);
-  });
-  speakSyllable('mah', () => speakSyllable('muh', () => {}));
-  bumpBar('communication', 30);
+
+  const speak = () => {
+    const beats = ['neutral', 'ohh', 'neutral', 'ohh'];
+    beats.forEach((state, i) => {
+      setTimeout(() => {
+        mouthState = state;
+        if (i === beats.length - 1) {
+          setTimeout(() => { mouthState = 'happy'; mamaTalking = false; }, 400);
+        }
+      }, i * 400);
+    });
+    speakSyllable('mah', () => speakSyllable('muh', () => {}));
+    bumpBar('communication', 30);
+  };
+
+  // ── iOS speech fix: wait for voices to load ──
+  const voices = window.speechSynthesis.getVoices();
+  if (voices.length > 0) {
+    speak();
+  } else {
+    window.speechSynthesis.onvoiceschanged = () => { speak(); };
+  }
 }
 
 function triggerMoodFlip() {
