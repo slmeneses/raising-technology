@@ -601,7 +601,6 @@ function updatePhase() {
       if (noFaceTimer > NO_FACE_SAD_FRAMES) {
         phase = 'sad';
         mouthState = 'sad';
-        status.textContent = 'where are you...';
       }
     }
     if (isBlinking) {
