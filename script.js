@@ -17,7 +17,7 @@ const RECOGNITION_MAX_SCALE = 1.9;
 const MOOD_FLIP_DELAY = 2000;
 const SOOTHE_DURATION_REQUIRED = 3000;
 const SOOTHE_IDLE_TIMEOUT = 600;
-const SLEEP_RELOAD_DELAY = 5000;
+const SLEEP_RELOAD_DELAY = 3000;
 const GLOBAL_NO_FACE_TIMEOUT = 5000;
 
 // ── iOS audio unlock ──
@@ -322,6 +322,8 @@ function sayMama() {
   });
   speakSyllable('mah', () => speakSyllable('muh', () => {}));
   bumpBar('communication', 30);
+  bumpBar('attachment', 33);
+
 }
 
 function triggerMoodFlip() {
