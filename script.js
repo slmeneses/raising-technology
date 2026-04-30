@@ -767,7 +767,7 @@ camera.start().then(() => { draw(); }).catch(() => {
 
 const ratingEl = document.getElementById('rating');
 let ratingTriggered = false;
-const RATING_TRIGGER_SECONDS = 60;
+const RATING_TRIGGER_SECONDS = 30;
 
 function triggerGlitchAndRating() {
   if (ratingTriggered) return;
