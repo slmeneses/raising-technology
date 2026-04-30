@@ -53,6 +53,12 @@ let sleepReloadTimer = null;
 let globalNoFaceTimer = null;
 let resetting = false;
 
+// ── current eye positions updated every draw frame ──
+let currentLeftEyeX = 0;
+let currentLeftEyeY = 0;
+let currentRightEyeX = 0;
+let currentRightEyeY = 0;
+
 function forceReset() {
   if (resetting) return;
   resetting = true;
@@ -187,8 +193,8 @@ function completeSoothe() {
   stopTears();
   phase = 'soothing';
   mouthState = 'neutral';
-  bumpBar('communication', 50);
-  bumpBar('attachment', 45);
+  bumpBar('communication', 20);
+  bumpBar('attachment', 15);
   eyeOpenAmount = 0;
   let blink = setInterval(() => {
     eyeOpenAmount = Math.min(1, eyeOpenAmount + 0.04);
@@ -210,8 +216,8 @@ canvas.addEventListener('touchstart', (e) => { e.preventDefault(); onHoldStart()
 canvas.addEventListener('touchend', () => onHoldEnd());
 canvas.addEventListener('touchcancel', () => onHoldEnd());
 
+// ── tears — always spawn from current eye positions ──
 let tears = [];
-let tearSpawnX1 = 0, tearSpawnY1 = 0, tearSpawnX2 = 0, tearSpawnY2 = 0;
 let tearInterval = null;
 let tearsPaused = false;
 
@@ -236,8 +242,9 @@ function startTears() {
   tearsPaused = false;
   tearInterval = setInterval(() => {
     if (phase === 'distress' && !tearsPaused) {
-      spawnTear(tearSpawnX1, tearSpawnY1);
-      spawnTear(tearSpawnX2, tearSpawnY2);
+      // always use current eye positions so tears follow the face
+      spawnTear(currentLeftEyeX, currentLeftEyeY);
+      spawnTear(currentRightEyeX, currentRightEyeY);
     }
   }, 280);
 }
@@ -323,7 +330,6 @@ function sayMama() {
   speakSyllable('mah', () => speakSyllable('muh', () => {}));
   bumpBar('communication', 30);
   bumpBar('attachment', 33);
-
 }
 
 function triggerMoodFlip() {
@@ -339,12 +345,6 @@ function triggerMoodFlip() {
       soothingResolved = false;
       isHolding = false;
       fireMilestone('DISTRESS MODE ACTIVATED');
-      const cx = Math.round(currentX / PIXEL) * PIXEL;
-      const cy = Math.round(currentY / PIXEL) * PIXEL;
-      tearSpawnX1 = cx - 80;
-      tearSpawnY1 = cy - 30;
-      tearSpawnX2 = cx + 80;
-      tearSpawnY2 = cy - 30;
       startTears();
       startCrySound();
     } else {
@@ -641,8 +641,6 @@ function updatePhase() {
     }
     return;
   }
-
-  // phase === 'sad': handled entirely by checkFaceLoss
 }
 
 function updateRecognition() {
@@ -710,6 +708,12 @@ function draw() {
   const leftEye = cx - eyeOffset;
   const rightEye = cx + eyeOffset;
 
+  // ── update current eye positions every frame so tears follow ──
+  currentLeftEyeX = leftEye;
+  currentLeftEyeY = eyeY;
+  currentRightEyeX = rightEye;
+  currentRightEyeY = eyeY;
+
   drawTears();
   drawBlush(leftEye - 80, eyeY + 40);
   drawBlush(rightEye + 80, eyeY + 40);
@@ -763,7 +767,7 @@ camera.start().then(() => { draw(); }).catch(() => {
 
 const ratingEl = document.getElementById('rating');
 let ratingTriggered = false;
-const RATING_TRIGGER_SECONDS = 30;
+const RATING_TRIGGER_SECONDS = 60;
 
 function triggerGlitchAndRating() {
   if (ratingTriggered) return;
