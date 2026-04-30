@@ -187,8 +187,8 @@ function completeSoothe() {
   stopTears();
   phase = 'soothing';
   mouthState = 'neutral';
-  bumpBar('communication', 20);
-  bumpBar('attachment', 15);
+  bumpBar('communication', 60);
+  bumpBar('attachment', 55);
   eyeOpenAmount = 0;
   let blink = setInterval(() => {
     eyeOpenAmount = Math.min(1, eyeOpenAmount + 0.04);
